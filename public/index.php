@@ -13,7 +13,67 @@ $app = new \Slim\App([
 	]
 ]);
 
-// Registering a new user
+// Method to check parameters
+function isTheseParametersAvailable($required_fields) {
+    $error = false;
+    $error_fields = "";
+    $request_params = $_REQUEST;
+ 
+    foreach ($required_fields as $field) {
+        if (!isset($request_params[$field]) || strlen(trim($request_params[$field])) <= 0) {
+            $error = true;
+            $error_fields .= $field . ', ';
+        }
+    }
+ 
+    if ($error) {
+        $response = array();
+        $response['success'] = false;
+        $response['message'] = 'Required field(s) ' . substr($error_fields, 0, -2) . ' is missing or empty';
+        echo json_encode($response);
+        return false;
+    }
+
+    return true;
+}
+  
+// User login route
+$app->post('/login', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('username', 'password'))) {
+        $requestData = $request->getParsedBody();
+        $username = $requestData['username'];
+        $password = $requestData['password'];
+ 
+        $db = new DbOperation();
+
+        $responseData = array();
+
+        if ($db->checkUserAvailability($username) > 0) {
+        	$user = $db->userLogin($username, $password);
+
+        	if (isset($user['id'])) {
+	        	if ($user['status'] == 1) {
+	        		$responseData['success'] = true;
+	        		$responseData['message'] = "Anda berhasil masuk";
+	            	$responseData['user'] = $user;
+	        	} else {
+	        		$responseData['success'] = false;
+	            	$responseData['message'] = "Akun anda tidak aktif. Silakan hubungi administrator.";
+	        	}
+	        } else {
+				$responseData['success'] = false;
+	            	$responseData['message'] = "Nama pengguna atau kata sandi salah";	        	
+	        }      	            
+        } else {
+            $responseData['success'] = false;
+            $responseData['message'] = "Akun anda belum terdaftar";
+        }
+ 
+        $response->getBody()->write(json_encode($responseData));
+    }
+});
+
+// User registration route
 $app->post('/register', function (Request $request, Response $response) {
     if (isTheseParametersAvailable(array('role_id', 'username', 'password', 'fullname', 'phone', 'address'))) {
         $requestData = $request->getParsedBody();
@@ -44,52 +104,12 @@ $app->post('/register', function (Request $request, Response $response) {
         $response->getBody()->write(json_encode($responseData));
     }
 });
- 
-// User login route
-$app->post('/login', function (Request $request, Response $response) {
-    if (isTheseParametersAvailable(array('username', 'password'))) {
-        $requestData = $request->getParsedBody();
-        $username = $requestData['username'];
-        $password = $requestData['password'];
- 
-        $db = new DbOperation();
- 
-        $responseData = array();
- 
-        if ($db->userLogin($username, $password)) {
-            $responseData['error'] = false;
-            $responseData['user'] = $db->getUserByUsername($username);
-        } else {
-            $responseData['error'] = true;
-            $responseData['message'] = 'Invalid username or password';
-        }
- 
-        $response->getBody()->write(json_encode($responseData));
-    }
+
+// Getting all doctors
+$app->get('/doctors', function (Request $request, Response $response) {
+    $db = new DbOperation();
+    $doctors = $db->getDoctors();
+    $response->getBody()->write(json_encode(array("doctors" => $doctors)));
 });
  
- 
-// Function to check parameters
-function isTheseParametersAvailable($required_fields) {
-    $error = false;
-    $error_fields = "";
-    $request_params = $_REQUEST;
- 
-    foreach ($required_fields as $field) {
-        if (!isset($request_params[$field]) || strlen(trim($request_params[$field])) <= 0) {
-            $error = true;
-            $error_fields .= $field . ', ';
-        }
-    }
- 
-    if ($error) {
-        $response = array();
-        $response["error"] = true;
-        $response["message"] = 'Required field(s) ' . substr($error_fields, 0, -2) . ' is missing or empty';
-        echo json_encode($response);
-        return false;
-    }
-    return true;
-}
-  
 $app->run();
