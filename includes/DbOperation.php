@@ -40,22 +40,17 @@ class DbOperation {
 		return $user;
 	}
 	
-	// Method to create a new user
-	function registerUser($role_id, $username, $password, $fullname, $phone, $address) {
-		if (!$this->isUsernameExist($username)) {
-			$hashPassword = md5($password);
-			$status = 1;			
-			$now = date('Y-m-d H:i:s');
+	// Method to insert a new user
+	function insertUser($role_id, $username, $password, $fullname, $phone, $address, $status) {		
+		$hashPassword = md5($password);		
+		$now = date('Y-m-d H:i:s');
 
-			$stmt = $this->con->prepare("INSERT INTO users (role_id, username, password, fullname, phone, address, status, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-			$stmt->bind_param("isssisiss", $role_id, $username, $hashPassword, $fullname, $phone, $address, $status, $now, $now);
-			
-			if ($stmt->execute()) return USER_CREATED;
-			
-			return USER_CREATION_FAILED;
-		}
-
-		return USER_EXIST;
+		$stmt = $this->con->prepare("INSERT INTO users (role_id, username, password, fullname, phone, address, status, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		$stmt->bind_param("isssisiss", $role_id, $username, $hashPassword, $fullname, $phone, $address, $status, $now, $now);
+		
+		if ($stmt->execute()) return true;
+		
+		return false;		
 	}
 
 	// Method to get user by username
@@ -73,33 +68,60 @@ class DbOperation {
 
 		return $user;
 	}
-	
-	// Method to check if username already exist
-	function isUsernameExist($username) {
-		$stmt = $this->con->prepare("SELECT id FROM users WHERE username = ?");
-		$stmt->bind_param("s", $username);
-		$stmt->execute();
-		$stmt->store_result();
 
-		return $stmt->num_rows > 0;
-	}
-
-	// Method to get all doctors
-	function getDoctors(){
-        $stmt = $this->con->prepare("SELECT id, fullname FROM users WHERE role_id = 3");
+	// Method to get all users based on role id
+	function getUsers($role_id){
+        $stmt = $this->con->prepare("SELECT id, fullname FROM users WHERE role_id = ?");
+        $stmt->bind_param("i", $role_id);
         $stmt->execute();
         $stmt->bind_result($id, $fullname);
 
-        $doctors = array();
+        $users = array();
 
         while ($stmt->fetch()) {
             $temp = array();
             $temp['id'] = $id;
             $temp['fullname'] = $fullname;            
 
-            array_push($doctors, $temp);
+            array_push($users, $temp);
         }
 
-        return $doctors;
+        return $users;
     }
+
+	// Method to get a doctor
+    function getDoctor($id){
+        $stmt = $this->con->prepare("SELECT id, username, fullname, status FROM users WHERE role_id = 3 AND id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->bind_result($id, $username, $fullname, $status);
+        $stmt->fetch();
+
+        $doctor = array();
+		$doctor['id'] = $id;
+		$doctor['username'] = $username;
+		$doctor['fullname'] = $fullname;
+		$doctor['status'] = $status;
+
+		return $doctor;
+    }
+
+    // Method to update a doctor
+    function updateDoctor($id, $username, $fullname, $status) {        
+        $stmt = $this->con->prepare("UPDATE users SET username = ?, fullname = ?, status = ? WHERE id = ?");
+        $stmt->bind_param("ssii", $username, $fullname, $status, $id);
+        if ($stmt->execute()) return true;
+        return false;
+    }
+
+    // Method to check username availability
+	function checkUsernameAvailability($username, $id) {				
+		$stmt = $this->con->prepare("SELECT COUNT(1) FROM users WHERE username = ? AND id != ?");
+		$stmt->bind_param("si", $username, $id);
+		$stmt->execute();
+		$stmt->bind_result($count);
+		$stmt->fetch();
+
+		return $count;
+	}	
 }

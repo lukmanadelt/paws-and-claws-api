@@ -62,7 +62,7 @@ $app->post('/login', function (Request $request, Response $response) {
 	        	}
 	        } else {
 				$responseData['success'] = false;
-	            	$responseData['message'] = "Nama pengguna atau kata sandi salah";	        	
+	            $responseData['message'] = "Nama Pengguna atau Kata Sandi salah";	        	
 	        }      	            
         } else {
             $responseData['success'] = false;
@@ -73,43 +73,119 @@ $app->post('/login', function (Request $request, Response $response) {
     }
 });
 
-// User registration route
-$app->post('/register', function (Request $request, Response $response) {
-    if (isTheseParametersAvailable(array('role_id', 'username', 'password', 'fullname', 'phone', 'address'))) {
-        $requestData = $request->getParsedBody();
-        $role_id = $requestData['role_id'];
-        $username = $requestData['username'];        
-        $password = $requestData['password'];
-        $fullname = $requestData['fullname'];
-        $phone = $requestData['phone'];
-        $address = $requestData['address'];
+// Getting all doctors
+$app->get('/doctors', function (Request $request, Response $response) {
+    $db = new DbOperation();
+    $doctors = $db->getUsers(3);
+    $response->getBody()->write(json_encode(array("doctors" => $doctors)));
+});
 
+// Getting a doctor
+$app->get('/doctors/{id}', function (Request $request, Response $response) {
+    $id = $request->getAttribute('id');
+    $db = new DbOperation();
+    $doctor = $db->getDoctor($id);
+    $response->getBody()->write(json_encode(array("doctor" => $doctor)));
+});
+
+// Updating a doctor
+$app->post('/doctors/update/{id}', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('username', 'fullname', 'status'))) {
+        $id = $request->getAttribute('id');
+ 
+        $requestData = $request->getParsedBody();
+ 
+        $username = $requestData['username'];
+        $fullname = $requestData['fullname'];
+        $status = $requestData['status'];        
+ 
         $db = new DbOperation();
         $responseData = array();
- 
-        $result = $db->registerUser($role_id, $username, $password, $fullname, $phone, $address);
- 
-        if ($result == USER_CREATED) {
-            $responseData['error'] = false;
-            $responseData['message'] = 'Registered successfully';
-            $responseData['user'] = $db->getUserByUsername($username);
-        } elseif ($result == USER_CREATION_FAILED) {
-            $responseData['error'] = true;
-            $responseData['message'] = 'Some error occurred';
-        } elseif ($result == USER_EXIST) {
-            $responseData['error'] = true;
-            $responseData['message'] = 'This username already exist, please login';
-        }
+
+        if ($db->checkUsernameAvailability($username, $id) > 0) {
+        	$responseData['success'] = false;
+            $responseData['message'] = 'Nama Pengguna sudah ada. Silahkan gunakan Nama Pengguna lain.';
+        } else {
+	        if ($db->updateDoctor($id, $username, $fullname, $status)) {
+	            $responseData['success'] = true;
+	            $responseData['message'] = 'Data berhasil diperbarui';            
+	        } else {
+	            $responseData['success'] = false;
+	            $responseData['message'] = 'Data gagal diperbarui';
+	        }
+	    }
  
         $response->getBody()->write(json_encode($responseData));
     }
 });
 
-// Getting all doctors
-$app->get('/doctors', function (Request $request, Response $response) {
+// Insert a new doctor
+$app->post('/doctors/insert', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('username', 'password', 'fullname', 'status'))) {
+        $requestData = $request->getParsedBody();
+        $role_id = 3;
+        $username = $requestData['username'];        
+        $password = $requestData['password'];
+        $fullname = $requestData['fullname'];
+        $status = $requestData['status'];        
+
+        $db = new DbOperation();
+        $responseData = array();
+         
+        if ($db->checkUserAvailability($username) == 0) {
+        	if ($db->insertUser($role_id, $username, $password, $fullname, null, null, $status)) {
+        		$responseData['success'] = true;
+            	$responseData['message'] = 'Data berhasil dimasukkan';            
+        	} else {
+        		$responseData['success'] = false;
+            	$responseData['message'] = 'Data gagal dimasukkan';            
+        	}            
+        } else {
+        	$responseData['success'] = false;
+            $responseData['message'] = 'Nama Pengguna sudah ada. Silahkan gunakan Nama Pengguna lain.';            
+        }
+         
+        $response->getBody()->write(json_encode($responseData));
+    }
+});
+
+// Getting all customers
+$app->get('/customers', function (Request $request, Response $response) {
     $db = new DbOperation();
-    $doctors = $db->getDoctors();
-    $response->getBody()->write(json_encode(array("doctors" => $doctors)));
+    $customers = $db->getUsers(2);
+    $response->getBody()->write(json_encode(array("customers" => $customers)));
+});
+
+// Insert a new doctor
+$app->post('/customers/insert', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('username', 'password', 'fullname', 'phone', 'address'))) {
+        $requestData = $request->getParsedBody();
+        $role_id = 2;
+        $username = $requestData['username'];        
+        $password = $requestData['password'];
+        $fullname = $requestData['fullname'];
+        $phone = $requestData['phone'];
+        $address = $requestData['address'];
+        $status = 1;        
+
+        $db = new DbOperation();
+        $responseData = array();
+         
+        if ($db->checkUserAvailability($username) == 0) {
+        	if ($db->insertUser($role_id, $username, $password, $fullname, $phone, $address, $status)) {
+        		$responseData['success'] = true;
+            	$responseData['message'] = 'Data berhasil dimasukkan';            
+        	} else {
+        		$responseData['success'] = false;
+            	$responseData['message'] = 'Data gagal dimasukkan';            
+        	}            
+        } else {
+        	$responseData['success'] = false;
+            $responseData['message'] = 'Nama Pengguna sudah ada. Silahkan gunakan Nama Pengguna lain.';            
+        }
+         
+        $response->getBody()->write(json_encode($responseData));
+    }
 });
  
 $app->run();
