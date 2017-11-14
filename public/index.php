@@ -121,13 +121,13 @@ $app->post('/doctors/update/{id}', function (Request $request, Response $respons
 
 // Insert a new doctor
 $app->post('/doctors/insert', function (Request $request, Response $response) {
-    if (isTheseParametersAvailable(array('username', 'password', 'fullname', 'status'))) {
+    if (isTheseParametersAvailable(array('username', 'password', 'fullname'))) {
         $requestData = $request->getParsedBody();
         $role_id = 3;
         $username = $requestData['username'];        
         $password = $requestData['password'];
         $fullname = $requestData['fullname'];
-        $status = $requestData['status'];        
+        $status = 1;        
 
         $db = new DbOperation();
         $responseData = array();
@@ -184,6 +184,47 @@ $app->post('/customers/insert', function (Request $request, Response $response) 
             $responseData['message'] = 'Nama Pengguna sudah ada. Silahkan gunakan Nama Pengguna lain.';            
         }
          
+        $response->getBody()->write(json_encode($responseData));
+    }
+});
+
+// Getting a customer
+$app->get('/customers/{id}', function (Request $request, Response $response) {
+    $id = $request->getAttribute('id');
+    $db = new DbOperation();
+    $customer = $db->getCustomer($id);
+    $response->getBody()->write(json_encode(array("customer" => $customer)));
+});
+
+// Updating a customer
+$app->post('/customers/update/{id}', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('username', 'fullname', 'phone', 'address', 'status'))) {
+        $id = $request->getAttribute('id');
+ 
+        $requestData = $request->getParsedBody();
+ 
+        $username = $requestData['username'];
+        $fullname = $requestData['fullname'];
+        $phone = $requestData['phone'];
+        $address = $requestData['address'];
+        $status = $requestData['status'];        
+ 
+        $db = new DbOperation();
+        $responseData = array();
+
+        if ($db->checkUsernameAvailability($username, $id) > 0) {
+        	$responseData['success'] = false;
+            $responseData['message'] = 'Nama Pengguna sudah ada. Silahkan gunakan Nama Pengguna lain.';
+        } else {
+	        if ($db->updateCustomer($id, $username, $fullname, $phone, $address, $status)) {
+	            $responseData['success'] = true;
+	            $responseData['message'] = 'Data berhasil diperbarui';            
+	        } else {
+	            $responseData['success'] = false;
+	            $responseData['message'] = 'Data gagal diperbarui';
+	        }
+	    }
+ 
         $response->getBody()->write(json_encode($responseData));
     }
 });

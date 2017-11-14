@@ -123,5 +123,32 @@ class DbOperation {
 		$stmt->fetch();
 
 		return $count;
-	}	
+	}
+
+	// Method to get a customer
+    function getCustomer($id){
+        $stmt = $this->con->prepare("SELECT id, username, fullname, phone, address, status FROM users WHERE role_id = 2 AND id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->bind_result($id, $username, $fullname, $phone, $address, $status);
+        $stmt->fetch();
+
+        $customer = array();
+		$customer['id'] = $id;
+		$customer['username'] = $username;
+		$customer['fullname'] = $fullname;
+		$customer['phone'] = $phone;
+		$customer['address'] = $address;
+		$customer['status'] = $status;
+
+		return $customer;
+    }
+
+    // Method to update a customer
+    function updateCustomer($id, $username, $fullname, $phone, $address, $status) {        
+        $stmt = $this->con->prepare("UPDATE users SET username = ?, fullname = ?, phone = ?, address = ?, status = ? WHERE id = ?");
+        $stmt->bind_param("ssssii", $username, $fullname, $phone, $address, $status, $id);
+        if ($stmt->execute()) return true;
+        return false;
+    }	
 }
