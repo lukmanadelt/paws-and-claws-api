@@ -150,5 +150,14 @@ class DbOperation {
         $stmt->bind_param("ssssii", $username, $fullname, $phone, $address, $status, $id);
         if ($stmt->execute()) return true;
         return false;
+    }
+
+    // Method to update profile
+    function updateProfile($id, $password) {
+    	$hashPassword = md5($password);		        
+        $stmt = $this->con->prepare("UPDATE users SET password = ?  WHERE id = ?");
+        $stmt->bind_param("si", $hashPassword, $id);
+        if ($stmt->execute()) return true;
+        return false;
     }	
 }

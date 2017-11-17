@@ -108,10 +108,10 @@ $app->post('/doctors/update/{id}', function (Request $request, Response $respons
         } else {
 	        if ($db->updateDoctor($id, $username, $fullname, $status)) {
 	            $responseData['success'] = true;
-	            $responseData['message'] = 'Data berhasil diperbarui';            
+	            $responseData['message'] = 'Data berhasil diubah';            
 	        } else {
 	            $responseData['success'] = false;
-	            $responseData['message'] = 'Data gagal diperbarui';
+	            $responseData['message'] = 'Data gagal diubah';
 	        }
 	    }
  
@@ -218,13 +218,37 @@ $app->post('/customers/update/{id}', function (Request $request, Response $respo
         } else {
 	        if ($db->updateCustomer($id, $username, $fullname, $phone, $address, $status)) {
 	            $responseData['success'] = true;
-	            $responseData['message'] = 'Data berhasil diperbarui';            
+	            $responseData['message'] = 'Data berhasil diubah';            
 	        } else {
 	            $responseData['success'] = false;
-	            $responseData['message'] = 'Data gagal diperbarui';
+	            $responseData['message'] = 'Data gagal diubah';
 	        }
 	    }
  
+        $response->getBody()->write(json_encode($responseData));
+    }
+});
+
+// Updating a profile
+$app->post('/profiles/update/{id}', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('password'))) {
+        $id = $request->getAttribute('id');
+ 
+        $requestData = $request->getParsedBody();
+ 
+        $password = $requestData['password'];        
+ 
+        $db = new DbOperation();
+        $responseData = array();
+        
+        if ($db->updateProfile($id, $password)) {
+            $responseData['success'] = true;
+            $responseData['message'] = 'Data berhasil diubah';            
+        } else {
+            $responseData['success'] = false;
+            $responseData['message'] = 'Data gagal diubah';
+        }
+	     
         $response->getBody()->write(json_encode($responseData));
     }
 });
