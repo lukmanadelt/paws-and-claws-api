@@ -156,7 +156,7 @@ $app->get('/customers', function (Request $request, Response $response) {
     $response->getBody()->write(json_encode(array("customers" => $customers)));
 });
 
-// Insert a new doctor
+// Insert a new customer
 $app->post('/customers/insert', function (Request $request, Response $response) {
     if (isTheseParametersAvailable(array('username', 'password', 'fullname', 'phone', 'address'))) {
         $requestData = $request->getParsedBody();
@@ -236,12 +236,16 @@ $app->post('/profiles/update/{id}', function (Request $request, Response $respon
  
         $requestData = $request->getParsedBody();
  
-        $password = $requestData['password'];        
+        $username = $requestData['username'];
+        $fullname = $requestData['fullname'];
+        $phone = $requestData['phone'];
+        $address = $requestData['address'];
+        $password = $requestData['password'];
  
         $db = new DbOperation();
         $responseData = array();
         
-        if ($db->updateProfile($id, $password)) {
+        if ($db->updateProfile($id, $username, $fullname, $phone, $address, $password)) {
             $responseData['success'] = true;
             $responseData['message'] = 'Data berhasil diubah';            
         } else {

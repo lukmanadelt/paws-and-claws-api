@@ -153,11 +153,29 @@ class DbOperation {
     }
 
     // Method to update profile
-    function updateProfile($id, $password) {
-    	$hashPassword = md5($password);		        
-        $stmt = $this->con->prepare("UPDATE users SET password = ?  WHERE id = ?");
-        $stmt->bind_param("si", $hashPassword, $id);
+    function updateProfile($id, $username, $fullname, $phone, $address, $password) {
+		$hashPassword = md5($password);
+		
+		if ($this->getRoleId($id) == 1) {
+			$stmt = $this->con->prepare("UPDATE users SET password = ? WHERE id = ?");
+			$stmt->bind_param("si", $hashPassword, $id);
+		} else {
+			$stmt = $this->con->prepare("UPDATE users SET username = ?, fullname = ?, phone = ?, address = ?, password = ?  WHERE id = ?");
+			$stmt->bind_param("sssssi", $username, $fullname, $phone, $address, $hashPassword, $id);
+		}
+
         if ($stmt->execute()) return true;
         return false;
-    }	
+	}
+	
+	// Method to get role id
+    function getRoleId($id) {
+    	$stmt = $this->con->prepare("SELECT role_id FROM users WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->bind_result($id);
+		$stmt->fetch();
+
+		return $id;		        
+	}
 }
