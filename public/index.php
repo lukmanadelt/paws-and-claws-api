@@ -257,4 +257,41 @@ $app->post('/profiles/update/{id}', function (Request $request, Response $respon
     }
 });
  
+// Insert a new pet
+$app->post('/pets/insert', function (Request $request, Response $response) {
+    if (isTheseParametersAvailable(array('pet_category_id', 'user_id', 'name', 'sex', 'dob', 'age', 'breed', 'color'))) {
+        $requestData = $request->getParsedBody();        
+        $pet_category_id = $requestData['pet_category_id'];
+        $user_id = $requestData['user_id'];
+        $name = $requestData['name'];
+        $sex = $requestData['sex'];
+        $dob = $requestData['dob'];
+        $age = $requestData['age'];
+        $breed = $requestData['breed'];
+        $color = $requestData['color'];
+
+        $file_path = "";
+        $var = $_POST['result'];
+        $file_path = $file_path . basename( $_FILES['uploaded_file']['name']);        
+
+        $db = new DbOperation();
+        $responseData = array();
+                 
+        if ($db->insertPet($pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color)) {
+            if (move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $file_path)) {
+                $responseData['success'] = true;
+                $responseData['message'] = 'Data berhasil dimasukkan';
+            } else {
+                $responseData['success'] = false;
+                $responseData['message'] = 'Foto gagal dimasukkan';
+            }
+        } else {
+            $responseData['success'] = false;
+            $responseData['message'] = 'Data gagal dimasukkan';
+        }
+                 
+        $response->getBody()->write(json_encode($responseData));
+    }
+});
+
 $app->run();
