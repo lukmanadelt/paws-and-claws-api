@@ -2,6 +2,7 @@
 
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
+use Slim\Http\UploadedFile;
 
 require '../vendor/autoload.php';
 require_once '../includes/DbOperation.php';
@@ -12,6 +13,9 @@ $app = new \Slim\App([
 		'displayErrorDetails' => true
 	]
 ]);
+
+$container = $app->getContainer();
+$container['upload_directory'] = __DIR__ . '/uploads';
 
 // Method to check parameters
 function isTheseParametersAvailable($required_fields) {
@@ -269,22 +273,14 @@ $app->post('/pets/insert', function (Request $request, Response $response) {
         $age = $requestData['age'];
         $breed = $requestData['breed'];
         $color = $requestData['color'];
-
-        $file_path = "";
-        $var = $_POST['result'];
-        $file_path = $file_path . basename( $_FILES['uploaded_file']['name']);        
-
+        $photo = $requestData['photo'];
+        
         $db = new DbOperation();
         $responseData = array();
                  
-        if ($db->insertPet($pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color)) {
-            if (move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $file_path)) {
-                $responseData['success'] = true;
-                $responseData['message'] = 'Data berhasil dimasukkan';
-            } else {
-                $responseData['success'] = false;
-                $responseData['message'] = 'Foto gagal dimasukkan';
-            }
+        if ($db->insertPet($pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color, $photo)) {            
+            $responseData['success'] = true;
+            $responseData['message'] = 'Data berhasil dimasukkan';            
         } else {
             $responseData['success'] = false;
             $responseData['message'] = 'Data gagal dimasukkan';
@@ -293,5 +289,39 @@ $app->post('/pets/insert', function (Request $request, Response $response) {
         $response->getBody()->write(json_encode($responseData));
     }
 });
+
+// Upload a new pet image
+$app->post('/pets/upload', function (Request $request, Response $response) {
+    $directory = $this->get('upload_directory');
+    $uploadedFiles = $request->getUploadedFiles();
+    $uploadedFile = $uploadedFiles['file'];
+
+    $responseData = array();
+
+    if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
+        $filename = moveUploadedFile($directory, $uploadedFile);
+
+        if ($filename != null) {
+            $responseData['success'] = true;
+            $responseData['message'] = 'Foto berhasil diunggah';    
+            $responseData['photo'] = $filename;
+        } else {
+            $responseData['success'] = false;
+            $responseData['message'] = 'Foto gagal diunggah';                
+        }
+    }
+
+    $response->getBody()->write(json_encode($responseData));    
+});
+
+function moveUploadedFile($directory, UploadedFile $uploadedFile) {
+    $extension = pathinfo($uploadedFile->getClientFilename(), PATHINFO_EXTENSION);
+    $basename = bin2hex(random_bytes(8));
+    $filename = sprintf('%s.%0.8s', $basename, $extension);
+
+    $uploadedFile->moveTo($directory . DIRECTORY_SEPARATOR . $filename);
+
+    return $filename;
+}
 
 $app->run();

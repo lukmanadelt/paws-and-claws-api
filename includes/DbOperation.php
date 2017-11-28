@@ -180,11 +180,11 @@ class DbOperation {
 	}
 
 	// Method to insert a new pet
-	function insertPet($pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color) {						
+	function insertPet($pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color, $photo) {						
 		$now = date('Y-m-d H:i:s');
 
-		$stmt = $this->con->prepare("INSERT INTO pets (pet_category_id, user_id, name, sex, dob, age, breed, color, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-		$stmt->bind_param("iisssissss", $pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color, $now, $now);
+		$stmt = $this->con->prepare("INSERT INTO pets (pet_category_id, user_id, name, sex, dob, age, breed, color, photo, created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		$stmt->bind_param("iisssisssss", $pet_category_id, $user_id, $name, $sex, $dob, $age, $breed, $color, $photo, $now, $now);
 		
 		if ($stmt->execute()) return true;
 		
