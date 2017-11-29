@@ -190,4 +190,24 @@ class DbOperation {
 		
 		return false;		
 	}
+
+	function getPets($user_id){
+		$stmt = $this->con->prepare("SELECT id, pet_category_id, name FROM pets WHERE user_id = ?");
+		$stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->bind_result($id, $pet_category_id, $name);
+
+        $pets = array();
+
+        while ($stmt->fetch()) {
+            $temp = array();
+            $temp['id'] = $id;
+			$temp['pet_category_id'] = $pet_category_id;			
+			$temp['name'] = $name;			
+
+            array_push($pets, $temp);
+        }
+
+        return $pets;
+    }
 }

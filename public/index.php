@@ -324,4 +324,12 @@ function moveUploadedFile($directory, UploadedFile $uploadedFile) {
     return $filename;
 }
 
+// Getting all pets
+$app->get('/customer/pets/{user_id}', function (Request $request, Response $response) {
+    $user_id = $request->getAttribute('user_id');
+    $db = new DbOperation();
+    $pets = $db->getPets($user_id);
+    $response->getBody()->write(json_encode(array("pets" => $pets)));
+});
+
 $app->run();
