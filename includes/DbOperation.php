@@ -70,7 +70,7 @@ class DbOperation {
 	}
 
 	// Method to get all users based on role id
-	function getUsers($role_id){
+	function getUsers($role_id) {
         $stmt = $this->con->prepare("SELECT id, fullname FROM users WHERE role_id = ?");
         $stmt->bind_param("i", $role_id);
         $stmt->execute();
@@ -90,7 +90,7 @@ class DbOperation {
     }
 
 	// Method to get a doctor
-    function getDoctor($id){
+    function getDoctor($id) {
         $stmt = $this->con->prepare("SELECT id, username, fullname, status FROM users WHERE role_id = 3 AND id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -126,7 +126,7 @@ class DbOperation {
 	}
 
 	// Method to get a customer
-    function getCustomer($id){
+    function getCustomer($id) {
         $stmt = $this->con->prepare("SELECT id, username, fullname, phone, address, status FROM users WHERE role_id = 2 AND id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -191,7 +191,7 @@ class DbOperation {
 		return false;		
 	}
 
-	function getPets($user_id){
+	function getPets($user_id) {
 		$stmt = $this->con->prepare("SELECT id, pet_category_id, name FROM pets WHERE user_id = ?");
 		$stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -209,5 +209,25 @@ class DbOperation {
         }
 
         return $pets;
+	}
+	
+	// Method to get a pet
+    function getPet($id) {
+        $stmt = $this->con->prepare("SELECT pet_category_id, name, sex, dob, breed, color, photo FROM pets WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->bind_result($pet_category_id, $name, $sex, $dob, $breed, $color, $photo);
+        $stmt->fetch();
+
+        $pet = array();
+		$pet['pet_category_id'] = $pet_category_id;
+		$pet['name'] = $name;
+		$pet['sex'] = $sex;
+		$pet['dob'] = $dob;
+		$pet['breed'] = $breed;
+		$pet['color'] = $color;
+		$pet['photo'] = $photo;
+
+		return $pet;
     }
 }

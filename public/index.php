@@ -332,4 +332,12 @@ $app->get('/customer/pets/{user_id}', function (Request $request, Response $resp
     $response->getBody()->write(json_encode(array("pets" => $pets)));
 });
 
+// Getting a pet
+$app->get('/pets/{id}', function (Request $request, Response $response) {
+    $id = $request->getAttribute('id');
+    $db = new DbOperation();
+    $pet = $db->getPet($id);
+    $response->getBody()->write(json_encode(array("pet" => $pet)));
+});
+
 $app->run();
